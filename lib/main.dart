@@ -1,6 +1,25 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'ForgotPassword.dart';
+import 'WelcomePage.dart';
+import 'Register.dart';
+import 'Login.dart';
+import 'FoodMain.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'firebase_options.dart';
 
-void main() {
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+
+  );
+
   runApp(MyApp());
 }
 
@@ -13,19 +32,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   int _selectedIndex = 0;
-
-  static const TextStyle optionStyle = TextStyle(
-      fontSize: 30,
-      fontWeight: FontWeight.bold
-  );
-
-  static const List<Widget> _widgetOptions = <Widget>[
-    Text('Index 0: Home', style: optionStyle),
-    Text('Index 1: Saved', style: optionStyle),
-    Text('Index 2: Post', style: optionStyle),
-    Text('Index 3: Community', style: optionStyle),
-    Text('Index 4: Me', style: optionStyle),
-  ];
+  bool _showWelcome = true;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -33,69 +40,27 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // This widget is the root of your application.
+  void _navigateToMainApp(BuildContext context) {
+    Navigator.pushNamed(context, '/main');
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.orange,
-          title: Row(
-            children: <Widget>[
-              Image.asset(
-                'assets/images/foodspotlogo.png',
-                width: 40,
-                height: 40,
-              ),
-              const SizedBox(width: 10),
-              const Text('FoodSpot'),
-            ],
-          ),
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/welcome',
+      routes: {
+        '/welcome': (context) => WelcomePage(
+          onContinue: () => _navigateToMainApp(context),
         ),
-
-        body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Colors.orange,
-          selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.black87, // Darker gray for unselected items
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Image.asset('assets/images/homelogo.png', width: 40, height: 40),
-              label: 'Home',
-              backgroundColor: Colors.orange,
-            ),
-
-            BottomNavigationBarItem(
-              icon: Image.asset('assets/images/foodspotlogo.png', width: 40, height: 40),
-              label: 'FoodSpot',
-              backgroundColor: Colors.orange,
-            ),
-
-            BottomNavigationBarItem(
-              icon: Image.asset('assets/images/add.png', width: 40, height: 40),
-              label: 'Post',
-              backgroundColor: Colors.orange,
-            ),
-
-            BottomNavigationBarItem(
-              icon: Image.asset('assets/images/community.png', width: 40, height: 40),
-              label: 'Community',
-              backgroundColor: Colors.orange,
-            ),
-
-            BottomNavigationBarItem(
-              icon: Image.asset('assets/images/me.png', width: 40, height: 40),
-              label: 'Me',
-              backgroundColor: Colors.orange,
-            ),
-          ],
+        '/signup': (context) => const SignUpPage(),
+        '/login': (context) => const LoginPage(),
+        '/forgotPassword': (context) => const ResetPasswordPage(),
+        '/main': (context) => FoodMain(
+          selectedIndex: _selectedIndex,
+          onItemTapped: _onItemTapped,
         ),
-      ),
+      },
     );
   }
 }
-
-

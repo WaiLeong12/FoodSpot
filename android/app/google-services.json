@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "176664355924",
+    "project_id": "foodspot-c6eb2",
+    "storage_bucket": "foodspot-c6eb2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:176664355924:android:0514e8209dec0cd4f5f9c1",
+        "android_client_info": {
+          "package_name": "com.example.state_management"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBXnLByCXgrMJU_4ZUie_lHTpp7BzKJCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
