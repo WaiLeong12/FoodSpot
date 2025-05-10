@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'profile.dart';
 
 class FoodMain extends StatefulWidget {
   final int selectedIndex;
@@ -15,18 +16,44 @@ class FoodMain extends StatefulWidget {
 }
 
 class _FoodMainState extends State<FoodMain> {
-  late final TextEditingController _searchController;
+  late TextEditingController _searchController;
+  late int _currentIndex;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _currentIndex = widget.selectedIndex;
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    widget.onItemTapped(index);
+  }
+
+  Widget _getCurrentPage() {
+    switch (_currentIndex) {
+      case 0:
+        return Center(child: Text('Home Page (coming soon)'));
+      case 1:
+        return Center(child: Text('Saved Page (coming soon)'));
+      case 2:
+        return Center(child: Text('Post Page (coming soon)'));
+      case 3:
+        return Center(child: Text('Community Page (coming soon)'));
+      case 4:
+        return const ProfilePage();
+      default:
+        return Center(child: Text('Unknown page'));
+    }
   }
 
   @override
@@ -45,9 +72,7 @@ class _FoodMainState extends State<FoodMain> {
             const SizedBox(width: 10),
             const Text(
               'FoodSpot',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -55,53 +80,14 @@ class _FoodMainState extends State<FoodMain> {
       ),
       body: Container(
         color: Colors.orange[50],
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search posts...',
-                  filled: true,
-                  fillColor: Colors.orange[200],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
-                  prefixIcon: const Icon(Icons.search, color: Colors.black87),
-                  suffixIcon: _searchController.text.isEmpty
-                      ? null
-                      : IconButton(
-                    icon: const Icon(Icons.cancel, color: Colors.black87),
-                    onPressed: () => setState(() => _searchController.clear()),
-                  ),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-            const Expanded(
-              child: Center(
-                child: Text(
-                  'Welcome to FoodSpot',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        child: _getCurrentPage(),
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.orange,
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black87,
-        currentIndex: widget.selectedIndex,
-        onTap: widget.onItemTapped,
+        currentIndex: _currentIndex,
+        onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         selectedFontSize: 12,
         unselectedFontSize: 12,

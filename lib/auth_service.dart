@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -29,6 +30,7 @@ class PasswordRequirements {
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   PasswordStrength checkPasswordStrength(String password) {
     if (password.isEmpty) return PasswordStrength.weak;
@@ -177,6 +179,7 @@ class AuthService {
     required String email,
     required String password,
     required BuildContext context,
+    required String username,
   }) async {
     // 1. Basic email validation
     if (!_isValidEmail(email)) {
@@ -206,15 +209,32 @@ class AuthService {
         password: password,
       );
 
+      // Save user data to Firestore
+      User? user = userCredential.user;
+      if (user != null) {
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'email': email,
+          'username': username,
+          'bio': '', // Empty bio initially
+          'followers': 0,
+          'following': 0,
+          'joinedDate': Timestamp.now(),
+          'lastLogin': Timestamp.now(),
+          'myPostsCount': 0,
+          'profileImageUrl': '', // Empty initially, can be updated later
+        });
+      }
+
       // Send verification email
-      await userCredential.user?.sendEmailVerification();
+      await user?.sendEmailVerification();
 
       _showSuccess(
         context,
         'Registration successful! Please check your email for verification.',
       );
 
-      return userCredential.user;
+      return user;
     } on FirebaseAuthException catch (e) {
       _showError(context, _getErrorMessage(e.code));
       return null;
@@ -228,7 +248,13 @@ class AuthService {
   void _showError(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
+        content: Row(
+          children: [
+            Icon(Icons.error, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
+          ],
+        ),
         backgroundColor: Colors.red[700],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -242,7 +268,13 @@ class AuthService {
   void _showWarning(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
+        content: Row(
+          children: [
+            Icon(Icons.warning, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
+          ],
+        ),
         backgroundColor: Colors.orange[700],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -256,7 +288,13 @@ class AuthService {
   void _showSuccess(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
+          ],
+        ),
         backgroundColor: Colors.green[700],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(

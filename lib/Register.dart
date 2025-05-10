@@ -79,12 +79,22 @@ class _SignUpPageState extends State<SignUpPage> {
       final user = await _authService.register(
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text.trim(),
+        username: _usernameCtrl.text.trim(),
         context: context,
       );
 
       if (user != null && mounted) {
         // Navigate to email verification page instead of home
         Navigator.pushReplacementNamed(context, '/verify-email');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) {
