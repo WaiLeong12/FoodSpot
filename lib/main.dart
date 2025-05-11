@@ -1,5 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:state_management/MePage.dart';
+import 'package:state_management/SavedPost.dart';
+import 'package:state_management/post.dart';
+import 'Community.dart';
 import 'ForgotPassword.dart';
 import 'WelcomePage.dart';
 import 'Register.dart';
@@ -15,6 +19,7 @@ import 'firebase_options.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
 
   );
@@ -37,6 +42,12 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _selectedIndex = index;
     });
+    if (index == 2) { // Post button index
+      Navigator.pushNamed(context, '/post');
+    }
+    else if (index == 3){
+      Navigator.pushNamed(context, '/community');
+    }
   }
 
   void _navigateToMainApp(BuildContext context) {
@@ -52,12 +63,24 @@ class _MyAppState extends State<MyApp> {
         '/welcome': (context) => WelcomePage(
           onContinue: () => _navigateToMainApp(context),
         ),
-        '/signup': (context) => const SignUpPage(),
-        '/login': (context) => const LoginPage(),
-        '/forgotPassword': (context) => const ResetPasswordPage(),
+        '/signup': (context) => const SignUpPage(
+        ),
+        '/login': (context) => const LoginPage(
+        ),
+        '/forgotPassword': (context) => const ResetPasswordPage(
+        ),
         '/main': (context) => FoodMain(
           selectedIndex: _selectedIndex,
           onItemTapped: _onItemTapped,
+        ),
+        '/community': (context) => const CommunityPage(
+        ),
+        '/post': (context) => PostPage(
+          onPostCreated: () {},
+        ),
+        '/save': (context) => const SavedPostPage(
+        ),
+        '/me': (context) => const MePage(
         ),
       },
     );

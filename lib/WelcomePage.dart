@@ -15,11 +15,11 @@ class WelcomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-                Image.asset(
-                  'assets/images/WelcomeImage.png',
-                  height: 300,
-                  width: 500,
-                ),
+              Image.asset(
+                'assets/images/WelcomeImage.png',
+                height: 300,
+                width: 500,
+              ),
 
               const Text(
                 'Welcome to FoodSpot',

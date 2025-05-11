@@ -1,9 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum PasswordStrength {
   weak,
@@ -100,15 +97,14 @@ class AuthService {
     try {
       await _auth.sendPasswordResetEmail(email: email);
       _showSuccess(
-          context,
-          'Password reset link sent to $email. Please check your inbox.'
+        context,
+        'Password reset link sent to $email. Please check your inbox.',
       );
     } on FirebaseAuthException catch (e) {
       _showError(context, _getErrorMessage(e.code));
     }
   }
 
-  // Update password (when user knows current password)
   Future<void> updatePassword({
     required String currentPassword,
     required String newPassword,
@@ -118,14 +114,12 @@ class AuthService {
       final user = _auth.currentUser;
       if (user == null) throw Exception('No user logged in');
 
-      // Re-authenticate first
       final cred = EmailAuthProvider.credential(
         email: user.email!,
         password: currentPassword,
       );
       await user.reauthenticateWithCredential(cred);
 
-      // Then update password
       await user.updatePassword(newPassword);
       _showSuccess(context, 'Password updated successfully!');
     } on FirebaseAuthException catch (e) {
@@ -133,108 +127,45 @@ class AuthService {
     }
   }
 
-  Future<bool> _verifyEmailDomain(String email) async {
-    try {
-      final domain = _extractDomain(email);
-      if (domain.isEmpty) return false;
-
-      // Try Google's DNS-over-HTTPS API first
-      try {
-        final response = await http.get(
-          Uri.parse('https://dns.google/resolve?name=$domain&type=MX'),
-          headers: {'Accept': 'application/json'},
-        );
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          return data['Answer'] != null && (data['Answer'] as List).isNotEmpty;
-        }
-      } catch (e) {
-        // Fall back to system call if HTTP request fails
-        return await _verifyEmailDomainWithSystemCall(domain);
-      }
-
-      return false;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> _verifyEmailDomainWithSystemCall(String domain) async {
-    try {
-      final result = await Process.run('nslookup', ['-query=mx', domain]);
-      final output = result.stdout.toString().toLowerCase();
-      return output.contains('mail exchanger') || output.contains('mx preference');
-    } catch (e) {
-      return false;
-    }
-  }
-
-  String _extractDomain(String email) {
-    final parts = email.split('@');
-    return parts.length == 2 ? parts[1] : '';
-  }
-
   Future<User?> register({
     required String email,
     required String password,
-    required BuildContext context,
     required String username,
+    required BuildContext context,
   }) async {
-    // 1. Basic email validation
     if (!_isValidEmail(email)) {
       _showError(context, 'Please enter a valid email address');
       return null;
     }
 
-    // 2. Domain verification
-    try {
-      final domainValid = await _verifyEmailDomain(email);
-      if (!domainValid) {
-        _showWarning(
-          context,
-          'We couldn\'t verify your email domain. '
-              'Please check your email address or use a different provider.',
-        );
-        return null;
-      }
-    } catch (e) {
-      _showWarning(context, 'Email verification skipped. Please verify your email later.');
-    }
-
-    // 3. Firebase registration
     try {
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Save user data to Firestore
-      User? user = userCredential.user;
-      if (user != null) {
-        await _firestore.collection('users').doc(user.uid).set({
-          'uid': user.uid,
-          'email': email,
-          'username': username,
-          'bio': '', // Empty bio initially
-          'followers': 0,
-          'following': 0,
-          'joinedDate': Timestamp.now(),
-          'lastLogin': Timestamp.now(),
-          'myPostsCount': 0,
-          'profileImageUrl': '', // Empty initially, can be updated later
-        });
-      }
+      final User? user = userCredential.user;
+      await userCredential.user?.sendEmailVerification();
 
-      // Send verification email
-      await user?.sendEmailVerification();
+      await _firestore.collection('users').doc(user!.uid).set({
+        'uid': user.uid,
+        'username': username,
+        'email': email,
+        'joinedDate': FieldValue.serverTimestamp(),
+        'lastLogin': FieldValue.serverTimestamp(),
+        'followers': [],
+        'following': [],
+        'myPostsCount': 0,
+        'bio': 'The user have not set bio yet',
+        'profileImageBase64': '',
+        'gender': 'Unknown',
+      });
 
       _showSuccess(
         context,
         'Registration successful! Please check your email for verification.',
       );
-
-      return user;
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
       _showError(context, _getErrorMessage(e.code));
       return null;
@@ -248,13 +179,7 @@ class AuthService {
   void _showError(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error, color: Colors.white),
-            SizedBox(width: 8),
-            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
-          ],
-        ),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.red[700],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -268,13 +193,7 @@ class AuthService {
   void _showWarning(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.warning, color: Colors.white),
-            SizedBox(width: 8),
-            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
-          ],
-        ),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.orange[700],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -288,13 +207,7 @@ class AuthService {
   void _showSuccess(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
-          ],
-        ),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.green[700],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -315,7 +228,7 @@ class AuthService {
       'user-disabled' => 'This account has been disabled',
       'too-many-requests' => 'Too many attempts. Try again later.',
       'requires-recent-login' => 'Please login again to change password',
-      _ => 'An error occurred. Please try again.',
+      _ => 'Incorrect input. Please try again.',
     };
   }
 }

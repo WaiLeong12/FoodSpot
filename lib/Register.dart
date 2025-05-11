@@ -84,17 +84,7 @@ class _SignUpPageState extends State<SignUpPage> {
       );
 
       if (user != null && mounted) {
-        // Navigate to email verification page instead of home
-        Navigator.pushReplacementNamed(context, '/verify-email');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Navigator.pushReplacementNamed(context, '/login');
       }
     } finally {
       if (mounted) {
@@ -130,14 +120,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     ],
                   ),
                   const SizedBox(height: 30),
-
                   const Text(
                     'Account Registration',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 30),
-
-                  // Email Field
                   TextFormField(
                     controller: _emailCtrl,
                     decoration: InputDecoration(
@@ -163,8 +150,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 20),
-
-                  // Username Field
                   TextFormField(
                     controller: _usernameCtrl,
                     decoration: InputDecoration(
@@ -189,8 +174,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 20),
-
-                  // Password Field
                   TextFormField(
                     controller: _passwordCtrl,
                     obscureText: _obscurePassword,
@@ -232,8 +215,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 8),
-
-                  // Password Strength Indicator
                   LinearProgressIndicator(
                     value: _passwordStrength.index / PasswordStrength.veryStrong.index,
                     backgroundColor: Colors.grey[200],
@@ -254,8 +235,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Password Requirements
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -278,8 +257,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-
-                  // Confirm Password Field
                   TextFormField(
                     controller: _confirmPasswordCtrl,
                     obscureText: _obscureConfirmPassword,
@@ -290,9 +267,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
                         ),
                         onPressed: () {
                           setState(() {
@@ -314,8 +289,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     textInputAction: TextInputAction.done,
                   ),
                   const SizedBox(height: 20),
-
-                  // Terms Agreement
                   Row(
                     children: [
                       Checkbox(
@@ -335,8 +308,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // Sign Up Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
