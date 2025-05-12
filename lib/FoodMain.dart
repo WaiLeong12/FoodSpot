@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'PostDetailPage.dart';
+import 'SearchUserPage.dart';
 
 class FoodMain extends StatefulWidget {
   final int selectedIndex;
@@ -320,6 +321,17 @@ class _FoodMainState extends State<FoodMain> {
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_add, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchUserPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
         color: Colors.orange[50],

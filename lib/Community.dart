@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'OtherUserProfilePage.dart';
+import 'PostCommentPage.dart';
 import 'PostDetailPage.dart';
 
 class CommunityPage extends StatefulWidget {
@@ -16,11 +17,46 @@ class CommunityPage extends StatefulWidget {
 }
 
 class _CommunityPageState extends State<CommunityPage> {
-  int _selectedIndex = 3; // Community tab is initially selected
+  int _selectedIndex = 3;
+  String _currentFilter = 'recent'; // 'recent', 'likes', or 'comments'
+  Stream<QuerySnapshot>? _postsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _postsStream = FirebaseFirestore.instance
+        .collection('posts')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  void _changeFilter(String filter) {
+    setState(() {
+      _currentFilter = filter;
+      switch (filter) {
+        case 'likes':
+          _postsStream = FirebaseFirestore.instance
+              .collection('posts')
+              .orderBy('likes', descending: true)
+              .snapshots();
+          break;
+        case 'comments':
+          _postsStream = FirebaseFirestore.instance
+              .collection('posts')
+              .orderBy('commentsCount', descending: true)
+              .snapshots();
+          break;
+        default: // 'recent'
+          _postsStream = FirebaseFirestore.instance
+              .collection('posts')
+              .orderBy('timestamp', descending: true)
+              .snapshots();
+      }
+    });
+  }
 
   void _onItemTapped(int index, BuildContext context) {
     if (index == _selectedIndex && index == 3) {
-      // Already on community, or handle refresh
       return;
     }
     setState(() {
@@ -31,22 +67,16 @@ class _CommunityPageState extends State<CommunityPage> {
         Navigator.pushNamedAndRemoveUntil(context, '/main', (Route<dynamic> route) => false);
         break;
       case 1: // Saved
-        Navigator.pushNamed(context, '/saved');
+        Navigator.pushNamed(context, '/save');
         break;
       case 2: // Post
         Navigator.pushNamed(context, '/post');
         break;
       case 3: // Community
-      // If CommunityPage is pushed onto a stack and this bottom nav is part of it,
-      // tapping community again might not do anything or could pop.
-      // If this is the main app navigation, it's fine.
+        Navigator.pushNamed(context, '/community');
         break;
       case 4: // Me
-      // This depends on your main navigation structure.
-      // If FoodMain handles tab switching, this should call back to FoodMain/MyApp.
-      // If CommunityPage is a standalone page with its own nav, route to your MePage.
-      // For now, assuming a route like '/me_profile_actual_page' for a standalone MePage.
-        Navigator.pushNamed(context, '/me_profile_actual_page'); // Adjust as needed
+        Navigator.pushNamed(context, '/me');
         break;
     }
   }
@@ -64,6 +94,27 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
+  Widget _buildFilterButton(String text, String filter) {
+    final isActive = _currentFilter == filter;
+    return TextButton(
+      onPressed: () => _changeFilter(filter),
+      style: TextButton.styleFrom(
+        backgroundColor: isActive ? Colors.orange : Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: isActive ? Colors.white : Colors.orange[800],
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,40 +124,71 @@ class _CommunityPageState extends State<CommunityPage> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset('assets/images/Food.png', width: 35, height: 35),
+            Image.asset('assets/images/Food.png', width: 70, height: 70),
             const SizedBox(width: 10),
-            const Text('FoodSpot Community', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            const Text('FoodSpot', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         centerTitle: true,
-      ),
-      body: Container(
-        color: Colors.orange[50],
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('posts').orderBy('timestamp', descending: true).snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: Colors.orange));
-            }
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error.toString()}'));
-            }
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Center(
-                child: Text('No posts yet. Be the first to share!', style: TextStyle(fontSize: 16, color: Colors.grey)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.black),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CommunityPage()),
               );
-            }
-            final posts = snapshot.data!.docs;
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final postDocument = posts[index];
-                return PostCardItem(postSnapshot: postDocument);
-              },
-            );
-          },
-        ),
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Filter buttons row
+          Container(
+            color: Colors.orange[100],
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildFilterButton('Recent', 'recent'),
+                _buildFilterButton('Most Likes', 'likes'),
+                _buildFilterButton('Most Comments', 'comments'),
+              ],
+            ),
+          ),
+          // Posts list
+          Expanded(
+            child: Container(
+              color: Colors.orange[50],
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _postsStream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: Colors.orange));
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error.toString()}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text('No posts yet. Be the first to share!', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                    );
+                  }
+                  final posts = snapshot.data!.docs;
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+                    itemCount: posts.length,
+                    itemBuilder: (context, index) {
+                      final postDocument = posts[index];
+                      return PostCardItem(postSnapshot: postDocument);
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.orange,
@@ -144,7 +226,7 @@ class _PostCardItemState extends State<PostCardItem> {
   bool _isBookmarkedLocal = false;
   Uint8List? _authorProfileImageBytes;
   String? _authorUsernameCurrent;
-  bool _isFollowingAuthor = false; // State for follow status
+  bool _isFollowingAuthor = false;
 
   @override
   void initState() {
@@ -210,7 +292,7 @@ class _PostCardItemState extends State<PostCardItem> {
           final currentUserData = currentUserDoc.data() as Map<String, dynamic>;
           final List<dynamic> savedPosts = currentUserData['savedPosts'] ?? [];
           currentBookmarkStatus = savedPosts.contains(widget.postSnapshot.id);
-          if (authorId != null && authorId.isNotEmpty) { // Check if already following this author
+          if (authorId != null && authorId.isNotEmpty) {
             final List<dynamic> followingList = currentUserData['following'] ?? [];
             currentFollowingStatus = followingList.contains(authorId);
           }
@@ -237,16 +319,12 @@ class _PostCardItemState extends State<PostCardItem> {
     final postRef = FirebaseFirestore.instance.collection('posts').doc(widget.postSnapshot.id);
     final String currentUserId = _currentUser!.uid;
 
-    // The StreamBuilder in CommunityPage will handle UI updates from Firestore.
-    // This function just writes the change.
     try {
       if (_isLikedLocal) {
         await postRef.update({'likes': FieldValue.arrayRemove([currentUserId])});
       } else {
         await postRef.update({'likes': FieldValue.arrayUnion([currentUserId])});
       }
-      // No local setState for _isLikedLocal and _likeCountLocal here,
-      // as didUpdateWidget will refresh from the snapshot provided by StreamBuilder.
     } catch (e) {
       print("Error updating like status for card: $e");
       if (mounted) {
@@ -264,7 +342,7 @@ class _PostCardItemState extends State<PostCardItem> {
     final String postId = widget.postSnapshot.id;
     final bool newBookmarkState = !_isBookmarkedLocal;
 
-    if (mounted) setState(() => _isBookmarkedLocal = newBookmarkState); // Optimistic UI
+    if (mounted) setState(() => _isBookmarkedLocal = newBookmarkState);
 
     try {
       if (newBookmarkState) {
@@ -276,7 +354,7 @@ class _PostCardItemState extends State<PostCardItem> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isBookmarkedLocal = !newBookmarkState); // Revert
+        setState(() => _isBookmarkedLocal = !newBookmarkState);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update save status.')));
       }
     }
@@ -296,7 +374,6 @@ class _PostCardItemState extends State<PostCardItem> {
     final targetUserRef = FirebaseFirestore.instance.collection('users').doc(targetUserId);
     final bool newFollowingState = !_isFollowingAuthor;
 
-    // Check if target user exists
     try {
       final targetUserDoc = await targetUserRef.get();
       if (!targetUserDoc.exists) {
@@ -317,7 +394,6 @@ class _PostCardItemState extends State<PostCardItem> {
       return;
     }
 
-    // Optimistic UI update
     if (mounted) {
       setState(() {
         _isFollowingAuthor = newFollowingState;
@@ -326,10 +402,10 @@ class _PostCardItemState extends State<PostCardItem> {
 
     try {
       WriteBatch batch = FirebaseFirestore.instance.batch();
-      if (newFollowingState) { // Follow
+      if (newFollowingState) {
         batch.update(currentUserRef, {'following': FieldValue.arrayUnion([targetUserId])});
         batch.update(targetUserRef, {'followers': FieldValue.arrayUnion([_currentUser!.uid])});
-      } else { // Unfollow
+      } else {
         batch.update(currentUserRef, {'following': FieldValue.arrayRemove([targetUserId])});
         batch.update(targetUserRef, {'followers': FieldValue.arrayRemove([_currentUser!.uid])});
       }
@@ -343,7 +419,7 @@ class _PostCardItemState extends State<PostCardItem> {
         errorMessage = 'Target user document not found.';
       }
       if (mounted) {
-        setState(() { _isFollowingAuthor = !newFollowingState; }); // Revert UI
+        setState(() { _isFollowingAuthor = !newFollowingState; });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
         );
@@ -401,14 +477,7 @@ class _PostCardItemState extends State<PostCardItem> {
             MaterialPageRoute(
               builder: (context) => PostDetailPage(postData: postDataFromSnapshot, postId: postId),
             ),
-          ).then((valueFromDetailPage) {
-            // If PostDetailPage could return a value indicating a change (e.g., like status),
-            // you could use it here. Otherwise, rely on StreamBuilder + didUpdateWidget.
-            // For example, if PostDetailPage pops with true if a like was made:
-            // if (valueFromDetailPage == true && mounted) {
-            //   _loadPostCardStates();
-            // }
-          });
+          );
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,7 +580,17 @@ class _PostCardItemState extends State<PostCardItem> {
                       const SizedBox(width: 12),
                       IconButton(
                         icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[700], size: 20),
-                        onPressed: () { /* TODO: Implement Comment navigation/popup */ },
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PostCommentPage(
+                                postId: postId,
+                                postAuthorId: postAuthorId,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       Text(postDataFromSnapshot['commentsCount']?.toString() ?? '0', style: const TextStyle(fontSize: 13)),
                     ],
