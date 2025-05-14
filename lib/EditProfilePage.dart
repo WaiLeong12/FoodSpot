@@ -22,9 +22,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _bioController;
   late TextEditingController _genderController;
 
-  XFile? _pickedImageFileX; // Stores the XFile from image_picker
-  Uint8List? _pickedImageBytes; // Stores bytes of the newly picked image for display
-  String? _existingProfileImageBase64; // Stores existing Base64 string from Firestore
+  XFile? _pickedImageFileX;
+  Uint8List? _pickedImageBytes;
+  String? _existingProfileImageBase64;
 
   bool _isLoading = false;
   User? _currentUser;
@@ -120,16 +120,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (_currentUser!.displayName != updatedData['username']) {
         await _currentUser!.updateDisplayName(updatedData['username']);
       }
-      // Firebase Auth photoURL expects a URL, not Base64.
-      // If you need to update Firebase Auth photoURL, you'd typically upload to Storage first.
-      // For Base64 stored in Firestore, you might choose not to update auth.photoURL,
-      // or use a placeholder/default URL if required by Firebase Auth.
-      // For this example, we are not updating auth.photoURL with Base64.
-      // if (_currentUser!.photoURL != updatedData['profileImageBase64'] && updatedData['profileImageBase64'].isNotEmpty) {
-      //   // This would be an issue as updatePhotoURL expects a URL.
-      //   // await _currentUser!.updatePhotoURL(updatedData['profileImageBase64']);
-      // }
-
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -181,15 +171,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         title: const Text('Edit Profile'),
         backgroundColor: Colors.orange,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save_outlined, color: Colors.white),
-            onPressed: _isLoading ? null : _saveProfile,
-          )
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -253,8 +237,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 TextFormField(
                   controller: _genderController,
                   decoration: const InputDecoration(
-                    labelText: 'Gender (Optional)',
-                    hintText: 'e.g., Male, Female, Other',
+                    labelText: 'Gender',
+                    hintText: 'e.g., Male, Female',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.wc_outlined),
                   ),

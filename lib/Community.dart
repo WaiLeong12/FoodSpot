@@ -126,7 +126,7 @@ class _CommunityPageState extends State<CommunityPage> {
           children: [
             Image.asset('assets/images/Food.png', width: 70, height: 70),
             const SizedBox(width: 10),
-            const Text('FoodSpot', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Community', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         centerTitle: true,

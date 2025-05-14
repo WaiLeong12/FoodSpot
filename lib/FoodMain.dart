@@ -91,26 +91,25 @@ class _FoodMainState extends State<FoodMain> {
   }
 
   Future<Uint8List?> _getProfileImage(String userId) async {
-    if (profileImageCache.containsKey(userId)) {
-      return profileImageCache[userId];
-    }
-
+    if (userId.isEmpty) return null;
     try {
-      final userDoc = await FirebaseFirestore.instance
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .get();
-      final data = userDoc.data();
-      if (data != null && data['profileImageBase64'] != null) {
-        final imageBytes = base64Decode(data['profileImageBase64']);
-        profileImageCache[userId] = imageBytes;
-        return imageBytes;
+      if (userDoc.exists) {
+        final data = userDoc.data() as Map<String, dynamic>;
+        final String? base64 = data['profileImageBase64'] as String?;
+        print("Profile image base64: ${base64 != null ? 'Found' : 'Not found'}");
+        if (base64 != null && base64.isNotEmpty) {
+          return base64Decode(base64);
+        }
       }
+      return null;
     } catch (e) {
       print("Error fetching profile image: $e");
+      return null;
     }
-
-    return null;
   }
 
   Widget _buildSearchResults() {
@@ -148,7 +147,7 @@ class _FoodMainState extends State<FoodMain> {
         final postData = post.data() as Map<String, dynamic>;
         final timestamp = postData['timestamp'] as Timestamp?;
         final formattedDate = timestamp != null
-            ? DateFormat('MMM d, yyyy').format(timestamp.toDate())
+            ? DateFormat('d MMM yyyy').format(timestamp.toDate())
             : '';
         final images = postData['imagesBase64'] as List<dynamic>?;
 
@@ -275,9 +274,14 @@ class _FoodMainState extends State<FoodMain> {
                               backgroundImage: MemoryImage(snapshot.data!),
                             );
                           } else {
-                            return const CircleAvatar(
+                            return CircleAvatar(
                               radius: 12,
-                              backgroundImage: AssetImage('assets/default_profile.png'),
+                              backgroundColor: Colors.orange[100],
+                              child: Icon(
+                                Icons.person,
+                                color: Colors.orange[700],
+                                size: 16,
+                              ),
                             );
                           }
                         },
@@ -323,7 +327,7 @@ class _FoodMainState extends State<FoodMain> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.person_add, color: Colors.white),
+            icon: const Icon(Icons.person_add, color: Colors.black),
             onPressed: () {
               Navigator.push(
                 context,

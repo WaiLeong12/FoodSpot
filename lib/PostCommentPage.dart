@@ -128,9 +128,9 @@ class _PostCommentPageState extends State<PostCommentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Comments', style: TextStyle(color: Colors.white)),
+        title: const Text('Comments', style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.orange,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.black),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -502,9 +502,9 @@ class _CommentCardItemState extends State<CommentCardItem> {
                   },
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: Colors.orange[100],
                     backgroundImage: _commenterProfileImageBytes != null ? MemoryImage(_commenterProfileImageBytes!) : null,
-                    child: _commenterProfileImageBytes == null ? Icon(Icons.person_outline_rounded, size: 18, color: Colors.grey[600]) : null,
+                    child: _commenterProfileImageBytes == null ? Icon(Icons.person, size: 18, color: Colors.orange[600]) : null,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -748,9 +748,9 @@ class _ReplyCardItemState extends State<ReplyCardItem> {
             },
             child: CircleAvatar(
               radius: 14,
-              backgroundColor: Colors.grey[200],
+              backgroundColor: Colors.orange[100],
               backgroundImage: _replierProfileImageBytes != null ? MemoryImage(_replierProfileImageBytes!) : null,
-              child: _replierProfileImageBytes == null ? Icon(Icons.person_outline, size: 14, color: Colors.grey[700]) : null,
+              child: _replierProfileImageBytes == null ? Icon(Icons.person, size: 14, color: Colors.orange[700]) : null,
             ),
           ),
           const SizedBox(width: 10),
@@ -805,3 +805,4 @@ class _ReplyCardItemState extends State<ReplyCardItem> {
     );
   }
 }
+

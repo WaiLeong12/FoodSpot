@@ -101,22 +101,6 @@ class WelcomePage extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 15),
-                    TextButton(
-                      onPressed: onContinue,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.orange[900],
-                        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      child: const Text(
-                        'Skip for now',
-                        style: TextStyle(
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
